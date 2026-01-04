@@ -1,3 +1,9 @@
+use ratatui::run;
+
+use crate::ui::base::App;
+
+mod ui;
+
 fn main() {
-    println!("Hello, world!");
+    run(|terminal| App::new().run(terminal))
 }
