@@ -1,25 +1,18 @@
 use std::time::Duration;
 
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event};
 use ratatui::{DefaultTerminal, Frame, layout::Rect, widgets::Widget};
 
-use crate::ui::popup::popup::FilePrompt;
+use crate::ui::{pane::Pane, popup::popup::FilePrompt};
 
 pub struct App {
-    active_pane: Panes,
     file_prompt: FilePrompt,
     exit: bool,
-}
-
-enum Panes {
-    None,
-    FilePrompt,
 }
 
 impl App {
     pub fn new() -> Self {
         Self { 
-            active_pane: Panes::None,
             file_prompt: FilePrompt::new(),
             exit: false, 
         }
@@ -39,16 +32,8 @@ impl App {
         }
     }
 
-    fn draw(&self, frame: &mut Frame){
+    fn draw(&mut self, frame: &mut Frame){
         frame.render_widget(self, frame.area());
-    }
-
-    fn get_active_pane(&self) -> &Panes {
-        &self.active_pane
-    }
-
-    fn set_active_pane(&mut self, pane: Panes) {
-        self.active_pane = pane;
     }
 
     fn event_listener(&mut self) {
@@ -61,38 +46,18 @@ impl App {
     }
 
     fn handle_event(&mut self) {
-        let active_pane = self.get_active_pane();
-
         match event::read() {
             Ok(Event::Key(ev)) => {
                 match ev.code { //Events
-                    KeyCode::Char('q') => self.exit = true,
-                    KeyCode::Char('O') => {
-                        self.file_prompt.toggle();
-                        self.set_active_pane(
-                            if self.file_prompt.is_visible() {
-                                Panes::FilePrompt
-                            } else {
-                                Panes::None
-                            });
-                    },
-
-                    KeyCode::Char(c) => {
-                        match *active_pane {
-                            Panes::FilePrompt => {
-                                self.file_prompt.append(c);
-                            }
-                            Panes::None => {},
-                        }
-                    },
-                    KeyCode::Backspace => {
-                        match *active_pane {
-                            Panes::FilePrompt => {
-                                self.file_prompt.pop();
-                            }
-                            Panes::None => {},
-                        }
-                    }
+                    event::KeyCode::Char('O') => self.file_prompt.toggle(),
+                    event::KeyCode::Char('h') => self.file_prompt.pane.move_right(),
+                    event::KeyCode::Char('j') => self.file_prompt.pane.move_down(),
+                    event::KeyCode::Char('k') => self.file_prompt.pane.move_up(),
+                    event::KeyCode::Char('l') => self.file_prompt.pane.move_left(),
+                    event::KeyCode::Char('q') => self.exit = true,
+                    event::KeyCode::Char(c) => self.file_prompt.append(c),
+                    event::KeyCode::Backspace => self.file_prompt.pop(),
+                    //self.event_handler.handle(active_window, char)
                     _ => {},
                 }
             },
@@ -101,7 +66,7 @@ impl App {
     }
 }
 
-impl Widget for &App {
+impl Widget for &mut App {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
         if self.file_prompt.is_visible() {
             let popup_area = Rect { x: 3*area.width/8, y: area.height/2 - 3, width: area.width/4, height: 3};
