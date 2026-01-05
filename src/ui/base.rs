@@ -3,7 +3,7 @@ use std::time::Duration;
 use crossterm::event::{self, Event};
 use ratatui::{DefaultTerminal, Frame, layout::{Constraint, Direction, Layout, Rect}, widgets::{Widget}};
 
-use crate::ui::{components::{generic_window::Generic, popup::OpenDialog}, utils::register::WindowRegister, windows::Window};
+use crate::ui::{components::{generic::Generic, popup::OpenDialog}, utils::register::WindowRegister, windows::Window};
 
 pub struct App {
     window_register: WindowRegister,

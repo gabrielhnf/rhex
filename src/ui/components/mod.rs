@@ -1,2 +1,2 @@
-pub mod popup;
 pub mod generic;
+pub mod popup;
