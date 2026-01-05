@@ -1,5 +1,6 @@
-pub mod pane;
 pub mod base;
 
-pub mod popup;
-pub mod generic_pane;
+pub mod utils;
+pub mod components;
+
+pub mod windows;
