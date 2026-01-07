@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crossterm::event::{self, Event, KeyCode};
-use ratatui::{DefaultTerminal, Frame, layout::{Constraint, Direction, Layout}, widgets::Widget};
+use ratatui::{DefaultTerminal, Frame, layout::{Constraint, Layout}, widgets::Widget};
 
 use crate::ui::{components::generic::Generic, utils::register::WindowRegister};
 
@@ -19,11 +19,8 @@ impl App {
     }
 
     pub fn run(mut self, terminal: &mut DefaultTerminal) {
-        self.window_register.register(Generic::new());
-        self.window_register.register(Generic::new());
-
-        //Should be assignable here,
-        //EventHandler::assign(character, window.method) //Should be context-switchable
+        self.window_register.register(Generic::new(false));
+        self.window_register.register(Generic::new(false));
 
         while !self.exit {
             match terminal.draw(|frame| self.draw(frame)) {
@@ -56,10 +53,9 @@ impl App {
                 match ev.code {
                     KeyCode::Tab => self.window_register.switch(),
                     KeyCode::Char(c) if c == 'q' => self.exit = true,
-                    KeyCode::Char(c) if c == 'h' => self.window_register.get_active().move_right(),
-                    KeyCode::Char(c) if c == 'j' => self.window_register.get_active().move_down(),
-                    KeyCode::Char(c) if c == 'k' => self.window_register.get_active().move_up(),
-                    KeyCode::Char(c) if c == 'l' => self.window_register.get_active().move_left(),
+                    KeyCode::Char(c) => {
+                        self.window_register.get_active().handle_event(c);
+                    },
                     _ => {},
                 }
             },
@@ -71,19 +67,16 @@ impl App {
 impl Widget for &mut App {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
 
-        let small = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
-            ])
-            .split(area);
+        let split = Layout::default().direction(ratatui::layout::Direction::Horizontal).constraints(vec![
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+        ]).split(area);
 
         let mut i = 0;
 
         for window in &mut self.window_register {
-            window.render(small[i], buf);
-            i = i + 1;
+            window.render(split[i], buf);
+            i += 1;
         }
 
     }

@@ -22,11 +22,7 @@ pub trait Window {
     }
 
     fn set_render(&self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer);
-
-    fn move_up(&mut self);
-    fn move_down(&mut self);
-    fn move_left(&mut self);
-    fn move_right(&mut self);
+    fn handle_event(&mut self, shortcut: char);
 }
 
 pub struct WindowState {
@@ -101,50 +97,10 @@ macro_rules! create_window {
                 self.render_body(area, buf);
             }
 
-            fn move_up(&mut self){
-                    match self.get_area() {
-                        Some(_) => {
-                            if self.get_cursor().1 > 0 {
-                                self.state.cursor.1 -= 1;
-                            }
-                        },
-                        None => {},
-                    }
+            fn handle_event(&mut self, shortcut: char){
+                self.handle_events(shortcut);
             }
-
-            fn move_down(&mut self){
-                    match self.get_area() {
-                        Some(area) => {
-                            if self.get_cursor().1 < area.height - 1 {
-                                self.state.cursor.1 += 1;
-                            }
-                        },
-                        None => {},
-                    }
-            }
-
-            fn move_left(&mut self){
-                    match self.get_area() {
-                        Some(area) => {
-                            if self.get_cursor().0 < area.width - 1 {
-                                self.state.cursor.0 += 1;
-                            }
-                        },
-                        None => {},
-                    }
-            }
-
-            fn move_right(&mut self){
-                match self.get_area() {
-                    Some(_) => {
-                        if self.get_cursor().0 > 0 {
-                            self.state.cursor.0 -= 1;
-                        }
-                    },
-                    None => {},
-                }
-            }
-
         }
+
     };
 }

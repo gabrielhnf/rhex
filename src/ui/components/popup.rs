@@ -17,6 +17,8 @@ impl OpenDialog {
         Paragraph::new(self.get_input()).block(block).render(area, buf);
     }
 
+    pub fn handle_events(&mut self, shortcut: char){}
+
     pub fn append(&mut self, c: char) {
         self.input.push(c);
     }
