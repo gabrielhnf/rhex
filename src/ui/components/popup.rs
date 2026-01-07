@@ -2,7 +2,7 @@ use ratatui::widgets::{Block, Clear, Paragraph, Widget};
 use ratatui::layout::Rect;
 
 use crate::create_window;
-use crate::ui::windows::{Window, WindowState};
+use crate::ui::windows::Window;
 
 create_window!(OpenDialog{
     input: String,

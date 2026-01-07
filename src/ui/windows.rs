@@ -1,23 +1,31 @@
 use ratatui::{layout::Rect, style::{Color, Stylize}, widgets::{Block, Widget}};
 
 pub trait Window {
-    fn get_cursor(&self) -> &(u16, u16);
-    fn set_cursor(&mut self, position: (u16, u16));
+    fn cursor(&self) -> &(u16, u16);
+    fn cursor_mut(&mut self) -> &mut (u16, u16);
 
-    fn get_area(&self) -> Option<&Rect>;
+    fn area(&self) -> Option<&Rect>;
     fn set_area(&mut self, area: Rect);
 
     fn render_cursor(&self, buf: &mut ratatui::prelude::Buffer) {
         let cursor_pos = Rect {
-            x: self.get_cursor().0 + self.get_area().unwrap().x, 
-            y: self.get_cursor().1 + self.get_area().unwrap().y, 
+            x: self.cursor().0 + self.area().unwrap().x, 
+            y: self.cursor().1 + self.area().unwrap().y, 
             height: 1, width: 1};
         Block::new().bg(Color::Yellow).render(cursor_pos, buf)
     }
 
     fn render(&mut self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
         self.set_render(area, buf);
-        self.set_area(area);
+
+        let inner_area = Rect {  //Area within the border
+            x: area.x.saturating_add(1), 
+            y: area.y.saturating_add(1), 
+            width: area.width.saturating_sub(2), 
+            height: area.height.saturating_sub(2) 
+        };
+
+        self.set_area(inner_area);
         self.render_cursor(buf);
     }
 
@@ -25,82 +33,53 @@ pub trait Window {
     fn handle_event(&mut self, shortcut: char);
 }
 
-pub struct WindowState {
-    pub cursor: (u16, u16),
-    area: Option<Rect>,
-}
+pub trait Movable {
+    fn cursor_mut(&mut self) -> &mut (u16, u16);
+    fn cursor(&self) -> &(u16, u16);
 
-impl WindowState {
-    pub fn new() -> Self {
-        Self { 
-            cursor: (0, 0), 
-            area: None,
-        }
-    }
+    fn area(&self) -> &Option<Rect>;
 
-    pub fn get_cursor(&self) -> &(u16, u16) {
-        &self.cursor
-    }
-
-    pub fn set_cursor(&mut self, position: (u16, u16)) {
-        self.cursor = position;
-    }
-
-    pub fn get_area(&self) -> Option<&Rect> {
-        self.area.as_ref()
-    }
-
-    pub fn set_area(&mut self, area: Rect) {
-        self.area = Some(area);
-    }
-}
-
-#[macro_export]
-macro_rules! create_window {
-    (
-        $name:ident {
-            $($field:ident : $ty:ty),* $(,)?
-        }
-    ) => {
-        pub struct $name {
-            pub state: WindowState,
-            $(pub $field: $ty),*
-        }
-
-        impl $name {
-            pub fn new($($field: $ty),*) -> Self {
-                Self {
-                    state: WindowState::new(),
-                    $($field),*
+    fn move_right(&mut self){
+        match self.area() {
+            Some(area) => {
+                if self.cursor().0 < area.width - 1 {
+                    self.cursor_mut().0 += 1;
                 }
-            }
+            },
+            None => {},
         }
+    }
 
-        impl Window for $name {
-            fn get_cursor(&self) -> &(u16, u16) {
-                &self.state.get_cursor()
-            }
-
-            fn set_cursor(&mut self, position: (u16, u16)) {
-                self.state.set_cursor(position);
-            }
-
-            fn get_area(&self) -> Option<&Rect> {
-                self.state.get_area()
-            }
-
-            fn set_area(&mut self, area: Rect) {
-                self.state.set_area(area);
-            }
-
-            fn set_render(&self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
-                self.render_body(area, buf);
-            }
-
-            fn handle_event(&mut self, shortcut: char){
-                self.handle_events(shortcut);
-            }
+    fn move_left(&mut self){
+        match self.area() {
+            Some(_) => {
+                if self.cursor().0 > 0 {
+                    self.cursor_mut().0 = self.cursor().0.saturating_sub(1);
+                }
+            },
+            None => {},
         }
+    }
 
-    };
+    fn move_up(&mut self){
+        match self.area() {
+            Some(_) => {
+                if self.cursor().1 > 0 {
+                    self.cursor_mut().1 = self.cursor().1.saturating_sub(1);
+                }
+            },
+            None => {},
+        }
+    }
+
+    fn move_down(&mut self){
+        match self.area() {
+            Some(area) => {
+                if self.cursor().1 < area.height - 1 {
+                    self.cursor_mut().1 += 1;
+                }
+            },
+            None => {},
+        }
+    }
 }

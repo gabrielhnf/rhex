@@ -73,7 +73,6 @@ impl Widget for &mut App {
         ]).split(area);
 
         let mut i = 0;
-
         for window in &mut self.window_register {
             window.render(split[i], buf);
             i += 1;
