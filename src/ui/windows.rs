@@ -22,16 +22,24 @@ pub trait Window {
     }
 
     fn set_render(&self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer);
+
+    fn move_up(&mut self);
+    fn move_down(&mut self);
+    fn move_left(&mut self);
+    fn move_right(&mut self);
 }
 
 pub struct WindowState {
-    cursor: (u16, u16),
+    pub cursor: (u16, u16),
     area: Option<Rect>,
 }
 
 impl WindowState {
     pub fn new() -> Self {
-        Self { cursor: (0, 0), area: None }
+        Self { 
+            cursor: (0, 0), 
+            area: None,
+        }
     }
 
     pub fn get_cursor(&self) -> &(u16, u16) {
@@ -92,6 +100,51 @@ macro_rules! create_window {
             fn set_render(&self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
                 self.render_body(area, buf);
             }
+
+            fn move_up(&mut self){
+                    match self.get_area() {
+                        Some(_) => {
+                            if self.get_cursor().1 > 0 {
+                                self.state.cursor.1 -= 1;
+                            }
+                        },
+                        None => {},
+                    }
+            }
+
+            fn move_down(&mut self){
+                    match self.get_area() {
+                        Some(area) => {
+                            if self.get_cursor().1 < area.height - 1 {
+                                self.state.cursor.1 += 1;
+                            }
+                        },
+                        None => {},
+                    }
+            }
+
+            fn move_left(&mut self){
+                    match self.get_area() {
+                        Some(area) => {
+                            if self.get_cursor().0 < area.width - 1 {
+                                self.state.cursor.0 += 1;
+                            }
+                        },
+                        None => {},
+                    }
+            }
+
+            fn move_right(&mut self){
+                match self.get_area() {
+                    Some(_) => {
+                        if self.get_cursor().0 > 0 {
+                            self.state.cursor.0 -= 1;
+                        }
+                    },
+                    None => {},
+                }
+            }
+
         }
     };
 }

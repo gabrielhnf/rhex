@@ -29,8 +29,8 @@ impl WindowRegister {
         self.active_window = (self.active_window + 1) % self.windows.len();
     }
 
-    pub fn get_active(&self) -> usize {
-        self.active_window
+    pub fn get_active(&mut self) -> &mut dyn Window {
+        self.windows[self.active_window].as_mut()
     }
 }
 

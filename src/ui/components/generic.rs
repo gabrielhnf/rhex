@@ -4,7 +4,8 @@ use ratatui::widgets::{Block, Paragraph};
 use crate::create_window;
 use crate::ui::windows::{Window, WindowState};
 
-create_window!(Generic{});
+create_window!(Generic {
+});
 
 impl Generic {
     fn render_body(&self, area: Rect, buf: &mut Buffer){

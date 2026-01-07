@@ -1,32 +1,29 @@
 use std::time::Duration;
 
-use crossterm::event::{self, Event};
-use ratatui::{DefaultTerminal, Frame, layout::Rect, widgets::{Widget}};
+use crossterm::event::{self, Event, KeyCode};
+use ratatui::{DefaultTerminal, Frame, layout::{Constraint, Direction, Layout}, widgets::Widget};
 
-use crate::ui::{components::{generic::Generic, popup::OpenDialog}, utils::register::WindowRegister, windows::Window};
+use crate::ui::{components::generic::Generic, utils::register::WindowRegister};
 
 pub struct App {
     window_register: WindowRegister,
-    file_prompt: OpenDialog,
-
     exit: bool,
 }
-
-//Implement some type of Event Register
 
 impl App {
     pub fn new() -> Self {
         Self { 
             window_register: WindowRegister::new(),
-            file_prompt: OpenDialog::new(String::new(), false),
             exit: false, 
         }
     }
 
     pub fn run(mut self, terminal: &mut DefaultTerminal) {
+        self.window_register.register(Generic::new());
+        self.window_register.register(Generic::new());
 
-        self.window_register.register(Generic::new());
-        self.window_register.register(Generic::new());
+        //Should be assignable here,
+        //EventHandler::assign(character, window.method) //Should be context-switchable
 
         while !self.exit {
             match terminal.draw(|frame| self.draw(frame)) {
@@ -36,7 +33,6 @@ impl App {
                 _ => {}
             }
 
-            //Handle events
             self.event_listener()
         }
     }
@@ -50,17 +46,20 @@ impl App {
             Ok(has_event) if has_event => {
                 self.handle_event();
             },
-            _ => {}, //Keep listening
+            _ => {},
         }
     }
 
     fn handle_event(&mut self) {
         match event::read() {
             Ok(Event::Key(ev)) => {
-                match ev.code { //Events
-                    //event::KeyCode::Tab => self.switch_window(),
-                    event::KeyCode::Char(c) => self.file_prompt.append(c),
-                    //self.event_handler.handle(active_window, char),
+                match ev.code {
+                    KeyCode::Tab => self.window_register.switch(),
+                    KeyCode::Char(c) if c == 'q' => self.exit = true,
+                    KeyCode::Char(c) if c == 'h' => self.window_register.get_active().move_right(),
+                    KeyCode::Char(c) if c == 'j' => self.window_register.get_active().move_down(),
+                    KeyCode::Char(c) if c == 'k' => self.window_register.get_active().move_up(),
+                    KeyCode::Char(c) if c == 'l' => self.window_register.get_active().move_left(),
                     _ => {},
                 }
             },
@@ -71,13 +70,21 @@ impl App {
 
 impl Widget for &mut App {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
+
+        let small = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Percentage(50),
+                Constraint::Percentage(50),
+            ])
+            .split(area);
+
+        let mut i = 0;
+
         for window in &mut self.window_register {
-            window.render(area, buf);
+            window.render(small[i], buf);
+            i = i + 1;
         }
 
-        if self.file_prompt.is_visible() {
-            let popup_area = Rect { x: 3*area.width/8, y: area.height/2 - 3, width: area.width/4, height: 3};
-            self.file_prompt.render(popup_area, buf);
-        }
     }
 }
