@@ -1,7 +1,13 @@
+use ratatui::{buffer::Buffer, layout::Rect};
+use taffy::{TaffyTree, prelude::{TaffyMaxContent, auto, length}};
+
 use crate::ui::windows::Window;
 
 pub struct WindowRegister {
     windows: Vec<Box<dyn Window>>,
+    area: Rect,
+    areas: Vec<Rect>,
+    tree: TaffyTree,
     active_window: usize,
 }
 
@@ -9,7 +15,56 @@ impl WindowRegister {
     pub fn new() -> Self {
         Self { 
         windows: vec![],
+        area: Rect::default(),
+        areas: vec![],
+        tree: TaffyTree::new(),
         active_window: 0,
+        }
+    }
+
+    pub fn initialize(&mut self, area: Rect){
+        self.area = area;
+    }
+
+    pub fn calculate(&mut self){
+        self.areas.clear();
+        let root_node = self.tree.new_leaf(
+            taffy::Style {
+                size: taffy::Size { width: length(self.area.width), height: length(self.area.height) },
+                ..Default::default()
+            }
+        ).unwrap();
+
+        for _i in 0..self.windows.len() {
+            let leaf = self.tree.new_leaf(
+                taffy::Style {
+                    size: taffy::Size { width: auto(), height: auto() },
+                    flex_grow: 1.0,
+                    ..Default::default()
+                }
+            ).unwrap();
+
+            self.tree.add_child(root_node, leaf).unwrap();
+        }
+
+        self.tree.compute_layout(root_node, taffy::Size::MAX_CONTENT).unwrap();
+
+        for node in self.tree.children(root_node).unwrap() {
+            let area = Rect { 
+                x: self.tree.layout(node).unwrap().location.x as u16,
+                y: self.tree.layout(node).unwrap().location.y as u16,
+                width: self.tree.layout(node).unwrap().size.width as u16,
+                height: self.tree.layout(node).unwrap().size.height as u16,
+            };
+
+            self.areas.push(area);
+        }
+    }
+
+    pub fn render(&mut self, buf: &mut Buffer){
+        assert_eq!(self.areas.len(), self.windows.len());
+        for i in 0..self.windows.len(){
+            self.windows[i].render(self.areas[i], buf);
         }
     }
 

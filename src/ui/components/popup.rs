@@ -1,3 +1,4 @@
+use crossterm::event::KeyCode;
 use ratatui::widgets::{Block, Clear, Paragraph, Widget};
 use ratatui::layout::Rect;
 
@@ -17,7 +18,7 @@ impl OpenDialog {
         Paragraph::new(self.get_input()).block(block).render(area, buf);
     }
 
-    pub fn handle_events(&mut self, shortcut: char){}
+    pub fn handle_events(&mut self, event: KeyCode){}
 
     pub fn append(&mut self, c: char) {
         self.input.push(c);

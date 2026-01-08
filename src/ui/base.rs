@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use crossterm::event::{self, Event, KeyCode};
-use ratatui::{DefaultTerminal, Frame, layout::{Constraint, Layout}, widgets::Widget};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use ratatui::{DefaultTerminal, Frame, widgets::Widget};
 
-use crate::ui::{components::generic::Generic, utils::register::WindowRegister};
+use crate::ui::{components::{hex::Hex}, utils::register::WindowRegister};
 
 pub struct App {
     window_register: WindowRegister,
@@ -19,8 +19,11 @@ impl App {
     }
 
     pub fn run(mut self, terminal: &mut DefaultTerminal) {
-        self.window_register.register(Generic::new(false));
-        self.window_register.register(Generic::new(false));
+        self.window_register.register(Hex::new(None));
+        self.window_register.register(Hex::new(None));
+        self.window_register.register(Hex::new(None));
+        self.window_register.register(Hex::new(None));
+        self.window_register.calculate();
 
         while !self.exit {
             match terminal.draw(|frame| self.draw(frame)) {
@@ -50,13 +53,15 @@ impl App {
     fn handle_event(&mut self) {
         match event::read() {
             Ok(Event::Key(ev)) => {
+                if ev.modifiers.contains(KeyModifiers::CONTROL) && ev.code == KeyCode::Char('q') {
+                    self.exit = true;
+                } //Should be if modifier is CONTROL, App handles events.
+
                 match ev.code {
                     KeyCode::Tab => self.window_register.switch(),
-                    KeyCode::Char(c) if c == 'q' => self.exit = true,
-                    KeyCode::Char(c) => {
-                        self.window_register.get_active().handle_event(c);
+                    key => {
+                        self.window_register.get_active().handle_event(key);
                     },
-                    _ => {},
                 }
             },
             _ => {},
@@ -66,17 +71,8 @@ impl App {
 
 impl Widget for &mut App {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer){
-
-        let split = Layout::default().direction(ratatui::layout::Direction::Horizontal).constraints(vec![
-            Constraint::Percentage(50),
-            Constraint::Percentage(50),
-        ]).split(area);
-
-        let mut i = 0;
-        for window in &mut self.window_register {
-            window.render(split[i], buf);
-            i += 1;
-        }
-
+        self.window_register.initialize(area);
+        self.window_register.calculate();
+        self.window_register.render(buf);
     }
 }

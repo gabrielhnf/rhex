@@ -1,4 +1,7 @@
+use crossterm::event::KeyCode;
 use ratatui::{layout::Rect, style::{Color, Stylize}, widgets::{Block, Widget}};
+
+//TODO: Create Triggerable => Not visible at start but rendered when triggered by event
 
 pub trait Window {
     fn cursor(&self) -> &(u16, u16);
@@ -30,7 +33,7 @@ pub trait Window {
     }
 
     fn set_render(&self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer);
-    fn handle_event(&mut self, shortcut: char);
+    fn handle_event(&mut self, event: KeyCode);
 }
 
 pub trait Movable {

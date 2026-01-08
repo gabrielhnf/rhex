@@ -7,7 +7,7 @@ macro_rules! create_window {
     ) => {
         pub struct $name {
             cursor: (u16, u16),
-            area: Option<Rect>,
+            area: Option<ratatui::layout::Rect>,
             $(pub $field: $ty),*
         }
 
@@ -21,7 +21,7 @@ macro_rules! create_window {
             }
         }
 
-        impl Window for $name {
+        impl crate::ui::windows::Window for $name {
             fn cursor(&self) -> &(u16, u16){
                 &self.cursor
             }
@@ -30,11 +30,11 @@ macro_rules! create_window {
                 &mut self.cursor
             }
 
-            fn area(&self) -> Option<&Rect>{
+            fn area(&self) -> Option<&ratatui::layout::Rect>{
                 self.area.as_ref()
             }
 
-            fn set_area(&mut self, area: Rect){
+            fn set_area(&mut self, area: ratatui::layout::Rect){
                 self.area = Some(area)
             }
 
@@ -42,8 +42,8 @@ macro_rules! create_window {
                 self.render_body(area, buf);
             }
 
-            fn handle_event(&mut self, shortcut: char){
-                self.handle_events(shortcut);
+            fn handle_event(&mut self, event: crossterm::event::KeyCode){
+                self.handle_events(event);
             }
         }
 
